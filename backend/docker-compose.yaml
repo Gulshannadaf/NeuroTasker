@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_DB: neurotasksai
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432" # Expose PostgreSQL port to host
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Persistent data volume
+
+  backend:
+    build: ./ # Build from the Dockerfile in the backend directory
+    restart: always
+    ports:
+      - "8000:8000" # Expose FastAPI port to host
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/neurotasksai # Connect to the 'db' service
+    depends_on:
+      - db # Ensure 'db' service starts before 'backend'
+    volumes:
+      - ./backend:/app/backend # Mount the backend code for easier development (optional)
+
+volumes:
+  pgdata: # Define the named volume for PostgreSQL data

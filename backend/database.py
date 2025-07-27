@@ -1,12 +1,54 @@
-from models import Task, Agent
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import SQLAlchemyError
+import os
 
-tasks = [
-    Task(id=1, title="Design new landing page", description="Create mockups", status="todo", priority="high", agent="Content Creator"),
-    Task(id=2, title="Implement OAuth", description="Google login", status="in-progress", priority="high", agent="Project Manager"),
-]
+# Database connection string
+# Using environment variables for sensitive information and flexibility
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/neurotasksai")
 
-agents = [
-    Agent(id=1, name="Research Assistant", role="Data Analysis", status="active", tasks_completed=24),
-    Agent(id=2, name="Content Creator", role="Content Gen", status="active", tasks_completed=18),
-    Agent(id=3, name="Project Manager", role="Planning", status="idle", tasks_completed=31),
-]
+# Create a SQLAlchemy engine
+engine = create_engine(DATABASE_URL)
+
+# Create a session local class
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Base class for declarative models
+Base = declarative_base()
+
+# Define the Task and Agent models for SQLAlchemy
+class DBTask(Base):
+    __tablename__ = "tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    description = Column(String, nullable=True)
+    status = Column(String, index=True)
+    priority = Column(String, index=True)
+    agent = Column(String, index=True)
+
+class DBAgent(Base):
+    __tablename__ = "agents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    role = Column(String)
+    status = Column(String)
+    tasks_completed = Column(Integer)
+
+# Function to create tables
+def create_db_tables():
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("Database tables created successfully or already exist.")
+    except SQLAlchemyError as e:
+        print(f"Error creating database tables: {e}")
+
+# Dependency to get a database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
