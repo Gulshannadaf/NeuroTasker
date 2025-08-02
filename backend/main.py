@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from routers import tasks, agents
 from fastapi.middleware.cors import CORSMiddleware
 from database import create_db_tables
+from routers import subtasks
+
 
 app = FastAPI(title="NeuroTask AI API")
 
@@ -20,4 +22,5 @@ app.add_middleware(
 )
 
 app.include_router(tasks.router, prefix="/tasks")
+app.include_router(tasks.router, prefix="/subtasks")
 app.include_router(agents.router, prefix="/agents")

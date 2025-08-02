@@ -16,6 +16,21 @@ class Task(TaskBase):
 
     class Config:
         from_attributes = True # updated to from_attributes for Pydantic V2+
+        
+class SubtaskBase(BaseModel):
+    title: str
+    status: Optional[str] = "todo"  # default to todo
+
+class SubtaskCreate(SubtaskBase):
+    task_id: int
+
+class Subtask(SubtaskBase):
+    id: int
+    task_id: int
+
+    class Config:
+        from_attributes = True
+        
 
 class AgentBase(BaseModel):
     name: str

@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import ForeignKey
 import os
 
 # Database connection string
@@ -27,6 +28,14 @@ class DBTask(Base):
     status = Column(String, index=True)
     priority = Column(String, index=True)
     agent = Column(String, index=True)
+    
+class DBSubTask(Base):
+    __tablename__ = "subtasks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    status = Column(String,default="todo")
+    task_id = Column(Integer,ForeignKey("tasks.id"))    
 
 class DBAgent(Base):
     __tablename__ = "agents"
