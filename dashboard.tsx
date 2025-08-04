@@ -413,7 +413,57 @@ export default function Component() {
       subtasks: newTask.subtasks.map((st, index) => ({ ...st, id: index + 1 })),
     }
 
-    addTaskLocally(taskToAdd)
+  //   addTaskLocally(taskToAdd)
+  //   setNewTask({
+  //     title: "",
+  //     description: "",
+  //     priority: "medium",
+  //     status: "todo",
+  //     agent: "",
+  //     dueDate: null,
+  //     projectId: "",
+  //     recurring: { enabled: false, interval: "none" },
+  //     subtasks: [],
+  //   })
+  //   setIsAddTaskOpen(false)
+
+  //   toast({
+  //     title: "Success",
+  //     description: "Task added successfully",
+  //   })
+  // }
+
+  const handleAddTask = async () => {
+  const taskToAdd = {
+    title: newTask.title,
+    description: newTask.description,
+    priority: newTask.priority,
+    status: newTask.status,
+    agent: newTask.agent,
+    dueDate: newTask.dueDate,
+    projectId: newTask.projectId,
+    recurring: newTask.recurring,
+    subtasks: newTask.subtasks,
+  }
+
+  try {
+    const response = await fetch("http://localhost:8000/tasks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(taskToAdd),
+    })
+
+    if (!response.ok) {
+      throw new Error("Failed to add task")
+    }
+
+    const createdTask = await response.json()
+
+    // Update local state with saved task from DB
+    addTaskLocally(createdTask)
+
     setNewTask({
       title: "",
       description: "",
@@ -429,49 +479,147 @@ export default function Component() {
 
     toast({
       title: "Success",
-      description: "Task added successfully",
+      description: "Task added successfully to DB",
     })
+  } catch (error) {
+    toast({
+      title: "Error",
+      description: "Failed to add task to DB",
+    })
+    console.error(error)
   }
+}
+
+
+  // const handleEditTask = async () => {
+  //   if (!editingTask.title.trim()) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Please enter a task title",
+  //       variant: "destructive",
+  //     })
+  //     return
+  //   }
+
+  //   setTasks((prevTasks) => {
+  //     const newTasks = { ...prevTasks }
+  //     Object.keys(newTasks).forEach((status) => {
+  //       newTasks[status] = newTasks[status].map((task) => (task.id === editingTask.id ? editingTask : task))
+  //     })
+  //     return newTasks
+  //   })
+
+  //   setEditingTask(null)
+  //   toast({
+  //     title: "Success",
+  //     description: "Task updated successfully",
+  //   })
+  // }
 
   const handleEditTask = async () => {
-    if (!editingTask.title.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a task title",
-        variant: "destructive",
-      })
-      return
+  if (!editingTask.title.trim()) {
+    toast({
+      title: "Error",
+      description: "Please enter a task title",
+      variant: "destructive",
+    })
+    return
+  }
+
+  try {
+    const response = await fetch(`http://localhost:8000/tasks/${editingTask.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(editingTask),
+    })
+
+    if (!response.ok) {
+      throw new Error("Failed to update task on server")
     }
 
+    const updatedTask = await response.json()
+
+    // Update local state with the updated task
     setTasks((prevTasks) => {
       const newTasks = { ...prevTasks }
       Object.keys(newTasks).forEach((status) => {
-        newTasks[status] = newTasks[status].map((task) => (task.id === editingTask.id ? editingTask : task))
+        newTasks[status] = newTasks[status].map((task) =>
+          task.id === updatedTask.id ? updatedTask : task
+        )
       })
       return newTasks
     })
 
     setEditingTask(null)
+
     toast({
       title: "Success",
       description: "Task updated successfully",
     })
-  }
-
-  const handleDeleteTask = (taskId) => {
-    setTasks((prevTasks) => {
-      const newTasks = { ...prevTasks }
-      Object.keys(newTasks).forEach((status) => {
-        newTasks[status] = newTasks[status].filter((task) => task.id !== taskId)
-      })
-      return newTasks
+  } catch (error) {
+    console.error(error)
+    toast({
+      title: "Error",
+      description: "Failed to update task",
+      variant: "destructive",
     })
+  }
+}
+
+
+
+
+  // const handleDeleteTask = (taskId) => {
+  //   setTasks((prevTasks) => {
+  //     const newTasks = { ...prevTasks }
+  //     Object.keys(newTasks).forEach((status) => {
+  //       newTasks[status] = newTasks[status].filter((task) => task.id !== taskId)
+  //     })
+  //     return newTasks
+  //   })
+
+  //   toast({
+  //     title: "Success",
+  //     description: "Task deleted successfully",
+  //   })
+  // }
+
+  
+const handleDeleteTask = async (taskId) => {
+  try {
+    const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete task");
+    }
+
+    // Update local state only after successful deletion from API
+    setTasks((prevTasks) => {
+      const newTasks = { ...prevTasks };
+      Object.keys(newTasks).forEach((status) => {
+        newTasks[status] = newTasks[status].filter((task) => task.id !== taskId);
+      });
+      return newTasks;
+    });
 
     toast({
       title: "Success",
       description: "Task deleted successfully",
-    })
+    });
+  } catch (error) {
+    toast({
+      title: "Error",
+      description: "Could not delete the task",
+      variant: "destructive",
+    });
+    console.error(error);
   }
+};
+
 
   // Add helper function for local task management
   const addTaskLocally = (task) => {
